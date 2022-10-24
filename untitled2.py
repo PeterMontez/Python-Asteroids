@@ -1,12 +1,34 @@
 import pygame
 import math
 
-print(math.cos(math.radians(1)))
+def updatebullets():
+    for i in bullets:
+        if i[4] < 80: 
+            i[0] += i[2]
+            i[1] += i[3]
+            i[4] += 1
+            if i[0] > xsize:
+                i[0] = i[0] - xsize
+                i[4] += 50
+            if i[1] > ysize:
+                i[1] = i[1] - ysize
+                i[4] += 50
+            if i[0] < 0:
+                i[0] = xsize - i[0]
+                i[4] += 50
+            if i[1] < 0:
+                i[1] = ysize - i[1]
+                i[4] += 50
+            pygame.draw.circle(win, (255,255,255), (i[0], i[1]), 5.0, width=0)
+
+        else:
+            bullets.remove(i)
+
 
 pygame.init()
 
-xsize = 750
-ysize = 750
+xsize = 900
+ysize = 900
 
 win = pygame.display.set_mode((xsize,ysize))
 
@@ -17,20 +39,32 @@ y = ysize/2
 radius = 15
 angle = 180
 rotspd = 70
-width = 40
-height = 40
 xvel = 0
 yvel = 0
 accel = 3
 speedlimit = 20
 decell = 7
+bltspd = 20
+
+bullets = []
 
 run = True
 while run:
     pygame.time.delay(16)
+
+    win.fill((0,0,0))
+
     for event in pygame.event.get():
         if event.type == pygame.QUIT:
             run = False
+
+        if event.type == pygame.KEYDOWN:
+            if event.key == pygame.K_SPACE:
+                incx = ((math.sin(math.radians(angle)))*bltspd)
+                incy = ((math.cos(math.radians(angle)))*bltspd)
+                print(incx, incy)
+                bullets.append([x, y, incx, incy, 0])
+    
     keys = pygame.key.get_pressed()
     
     if keys[pygame.K_LEFT]:
@@ -42,7 +76,7 @@ while run:
     if keys[pygame.K_UP]: #and yvel > -speedlimit:
         yvel += (math.cos(math.radians(angle)))*accel/10
         xvel += (math.sin(math.radians(angle)))*accel/10
-        
+
     else:
         yvel = yvel/(1+(decell/1000))
         xvel = xvel/(1+(decell/1000))
@@ -78,7 +112,15 @@ while run:
     point3 = (((math.sin(math.radians(anglep3)))*radius)+x,((math.cos(math.radians(anglep3)))*radius)+y)
     pos = [point1, point2, point3]
     
-    win.fill((0,0,0))
+    midfire = (((math.sin(math.radians(angle)))*(radius-40))+x,((math.cos(math.radians(angle)))*(radius-40))+y)
+    pointfire = (((math.sin(math.radians(angle)))*(radius-30))+x,((math.cos(math.radians(angle)))*(radius-30))+y)
+
     pygame.draw.polygon(win, (0,255,0), pos, width= 2)
+
+    if keys[pygame.K_UP]:
+        pygame.draw.line(win, (255,127,0), midfire, pointfire, width=5)
+
+    updatebullets()
+
     pygame.display.update()
 pygame.quit()
