@@ -15,7 +15,7 @@ pygame.display.set_caption("First Game")
 x = xsize/2
 y = ysize/2
 radius = 15
-angle = 0
+angle = 180
 rotspd = 70
 width = 40
 height = 40
@@ -33,29 +33,19 @@ while run:
             run = False
     keys = pygame.key.get_pressed()
     
-    # if keys[pygame.K_LEFT] and xvel > -speedlimit:
-    #     xvel -= accel/10
-    # else:
-    #     xvel = xvel/(1+(decell/1000))
-    
     if keys[pygame.K_LEFT]:
         angle += rotspd/10
         
     if keys[pygame.K_RIGHT]:
         angle -= rotspd/10
     
-    # if keys[pygame.K_RIGHT] and xvel < speedlimit:
-    #     xvel += accel/10
-    # else:
-    #     xvel = xvel/(1+(decell/1000))
-    if keys[pygame.K_UP] and yvel > -speedlimit:
-        yvel -= accel/10
+    if keys[pygame.K_UP]: #and yvel > -speedlimit:
+        yvel += (math.cos(math.radians(angle)))*accel/10
+        xvel += (math.sin(math.radians(angle)))*accel/10
+        
     else:
         yvel = yvel/(1+(decell/1000))
-    if keys[pygame.K_DOWN] and yvel < speedlimit:
-        yvel += accel/10
-    else:
-        yvel = yvel/(1+(decell/1000))
+        xvel = xvel/(1+(decell/1000))
     
     if angle < 0:
         angle += 360
@@ -83,16 +73,12 @@ while run:
     if anglep3 >= 360:
         anglep3 -= 360
     
-    point1 = (((math.sin(math.radians(angle)))*radius)+50,((math.cos(math.radians(angle)))*radius)+50)
-    point2 = (((math.sin(math.radians(anglep2)))*radius)+50,((math.cos(math.radians(anglep2)))*radius)+50)
-    point3 = (((math.sin(math.radians(anglep3)))*radius)+50,((math.cos(math.radians(anglep3)))*radius)+50)
+    point1 = (((math.sin(math.radians(angle)))*radius)+x,((math.cos(math.radians(angle)))*radius)+y)
+    point2 = (((math.sin(math.radians(anglep2)))*radius)+x,((math.cos(math.radians(anglep2)))*radius)+y)
+    point3 = (((math.sin(math.radians(anglep3)))*radius)+x,((math.cos(math.radians(anglep3)))*radius)+y)
+    pos = [point1, point2, point3]
     
-    position = (point1, point2)
-    
-
     win.fill((0,0,0))
-    pygame.draw.line(win, (0,255,0), point1, point2)
-    pygame.draw.line(win, (0,255,0), point2, point3)
-    pygame.draw.line(win, (0,255,0), point3, point1)
+    pygame.draw.polygon(win, (0,255,0), pos, width= 2)
     pygame.display.update()
 pygame.quit()
