@@ -1,4 +1,5 @@
 import ast
+from pickle import FALSE
 import pygame
 import math
 import random
@@ -40,6 +41,33 @@ def updateasts():
             i[1] = ysize - i[1]
         draw_ast(i[0], i[1], 50.0)
 
+    for i in m_ast:
+        i[0] += i[2]
+        i[1] += i[3]
+        if i[0] > xsize:
+            i[0] = i[0] - xsize
+        if i[1] > ysize:
+            i[1] = i[1] - ysize
+        if i[0] < 0:
+            i[0] = xsize - i[0]
+        if i[1] < 0:
+            i[1] = ysize - i[1]
+        draw_ast(i[0], i[1], 30.0)
+
+    for i in s_ast:
+        i[0] += i[2]
+        i[1] += i[3]
+        if i[0] > xsize:
+            i[0] = i[0] - xsize
+        if i[1] > ysize:
+            i[1] = i[1] - ysize
+        if i[0] < 0:
+            i[0] = xsize - i[0]
+        if i[1] < 0:
+            i[1] = ysize - i[1]
+        draw_ast(i[0], i[1], 15.0)
+    
+
 def spawn_asts(level):
     for i in range(int((level+1)/2)+4):
         ypos = random.randint(0,ysize)
@@ -58,6 +86,31 @@ def spawn_asts(level):
 
         l_ast.append([xpos, ypos, xspd, yspd])
 
+def spawn_asts_v2(x, y, s):
+    if s == 'L':
+        for i in range (2):
+            yspd = (random.randint(0,int(ast_speedlimit*0.7*10)))/10
+            xspd = (random.randint(0, int(ast_speedlimit*0.7*10)))/10
+
+            if bool(random.getrandbits(1)):
+                yspd = -yspd
+            if bool(random.getrandbits(1)):
+                xspd = -xspd
+            
+            m_ast.append([x, y, xspd, yspd])
+
+    elif s == 'M':
+        for i in range (2):
+            yspd = (random.randint(0,int(ast_speedlimit*10)))/10
+            xspd = (random.randint(0, int(ast_speedlimit*10)))/10
+
+            if bool(random.getrandbits(1)):
+                yspd = -yspd
+            if bool(random.getrandbits(1)):
+                xspd = -xspd
+            
+            s_ast.append([x, y, xspd, yspd])
+
 def draw_ast(x, y, s):
     pygame.draw.circle(win, (255,255,255), (x, y), s, width=10)
 
@@ -66,6 +119,49 @@ def ship_collision(ship_x, ship_y):
         dist = abs((((i[0] - ship_x)**2) + ((i[1] - ship_y)**2))**(1/2))
         if dist < 50.0:
             print("BATEU")
+            return False
+    for i in m_ast:
+        dist = abs((((i[0] - ship_x)**2) + ((i[1] - ship_y)**2))**(1/2))
+        if dist < 30.0:
+            print("BATEU")
+            return False  
+    for i in s_ast:
+        dist = abs((((i[0] - ship_x)**2) + ((i[1] - ship_y)**2))**(1/2))
+        if dist < 15.0:
+            print("BATEU")
+            return False
+    return True
+
+def bullet_collision():
+    for bullet in bullets:
+        for ast in l_ast:
+            dist = abs((((ast[0] - bullet[0])**2) + ((ast[1] - bullet[1])**2))**(1/2))
+            if dist < 50.0:
+                spawn_asts_v2(ast[0], ast[1], 'L')
+                l_ast.remove(ast)
+                try:
+                    bullets.remove(bullet)
+                except:
+                    pass
+
+        for ast in m_ast:
+            dist = abs((((ast[0] - bullet[0])**2) + ((ast[1] - bullet[1])**2))**(1/2))
+            if dist < 30.0:
+                spawn_asts_v2(ast[0], ast[1], 'M')
+                m_ast.remove(ast)
+                try:
+                    bullets.remove(bullet)
+                except:
+                    pass
+
+        for ast in s_ast:
+            dist = abs((((ast[0] - bullet[0])**2) + ((ast[1] - bullet[1])**2))**(1/2))
+            if dist < 15.0:
+                s_ast.remove(ast)
+                try:
+                    bullets.remove(bullet)
+                except:
+                    pass
 
 pygame.init()
 
@@ -80,16 +176,16 @@ x = xsize/2
 y = ysize/2
 radius = 15
 angle = 180
-rotspd = 70
+rotspd = 120
 xvel = 0
-yvel = 0
+yvel = 0  
 accel = 3
 speedlimit = 15
 decell = 7
 bltspd = 20
 edgepenetration = 18
-start = 1
-ast_speedlimit = 8
+start = 1 
+ast_speedlimit = 6
 
 s_ast = []
 m_ast = []
@@ -120,29 +216,29 @@ while run:
                 incx = ((math.sin(math.radians(angle)))*bltspd)
                 incy = ((math.cos(math.radians(angle)))*bltspd)
                 bullets.append([x, y, incx, incy, 0])
-    
+
     keys = pygame.key.get_pressed()
     
     if keys[pygame.K_LEFT]:
-        angle += rotspd/10
+        angle += rotspd/20
         
     if keys[pygame.K_RIGHT]:
-        angle -= rotspd/10
+        angle -= rotspd/20
     
     if keys[pygame.K_UP]:
         if abs(yvel) < speedlimit:
-            yvel += (math.cos(math.radians(angle)))*accel/10
-        elif yvel > 0 and (math.cos(math.radians(angle)))*accel/10 < 0:
-            yvel += (math.cos(math.radians(angle)))*accel/10
-        elif yvel < 0 and (math.cos(math.radians(angle)))*accel/10 > 0:
-            yvel += (math.cos(math.radians(angle)))*accel/10
+            yvel += (math.cos(math.radians(angle)))*accel/20
+        elif yvel > 0 and (math.cos(math.radians(angle)))*accel/20 < 0:
+            yvel += (math.cos(math.radians(angle)))*accel/20
+        elif yvel < 0 and (math.cos(math.radians(angle)))*accel/20 > 0:
+            yvel += (math.cos(math.radians(angle)))*accel/20
         
         if abs(xvel) < speedlimit:
-            xvel += (math.sin(math.radians(angle)))*accel/10
-        elif xvel > 0 and (math.sin(math.radians(angle)))*accel/10 < 0:
-            xvel += (math.sin(math.radians(angle)))*accel/10
-        elif xvel < 0 and (math.sin(math.radians(angle)))*accel/10 > 0:
-            xvel += (math.sin(math.radians(angle)))*accel/10
+            xvel += (math.sin(math.radians(angle)))*accel/20
+        elif xvel > 0 and (math.sin(math.radians(angle)))*accel/20 < 0:
+            xvel += (math.sin(math.radians(angle)))*accel/20
+        elif xvel < 0 and (math.sin(math.radians(angle)))*accel/20 > 0:
+            xvel += (math.sin(math.radians(angle)))*accel/20
 
     else:
         yvel = yvel/(1+(decell/1000))
@@ -189,7 +285,8 @@ while run:
 
     updatebullets()
     updateasts()
-    ship_collision(x, y)
+    run = ship_collision(x, y)
+    bullet_collision()
 
     pygame.display.update()
 pygame.quit()
