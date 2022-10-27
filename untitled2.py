@@ -215,6 +215,35 @@ def leveluptest():
         level += 1
         start = 1
 
+
+def draw_ship():
+    anglep2 = angle + 135
+    anglep3 = angle + 135 + 90
+    
+    if anglep2 >= 360:
+        anglep2 -= 360
+        
+    if anglep3 >= 360:
+        anglep3 -= 360
+
+    point1 = (((math.sin(math.radians(angle)))*radius)+x,((math.cos(math.radians(angle)))*radius)+y)
+    point2 = (((math.sin(math.radians(anglep2)))*radius)+x,((math.cos(math.radians(anglep2)))*radius)+y)
+    point3 = (((math.sin(math.radians(anglep3)))*radius)+x,((math.cos(math.radians(anglep3)))*radius)+y)
+    pos = [point1, point2, point3]
+    
+    midfire = (((math.sin(math.radians(angle)))*(radius-40))+x,((math.cos(math.radians(angle)))*(radius-40))+y)
+    pointfire = (((math.sin(math.radians(angle)))*(radius-30))+x,((math.cos(math.radians(angle)))*(radius-30))+y)
+
+    pygame.draw.polygon(win, (0,255,0), pos, width= 2)
+
+    if keys[pygame.K_UP]:
+        pygame.draw.line(win, (255,127,0), midfire, pointfire, width=5)
+
+
+def teleport():
+    return [(random.randint(0,xsize)), (random.randint(0,ysize))]
+
+
 pygame.init()
 
 xsize = 900
@@ -222,7 +251,7 @@ ysize = 900
 
 win = pygame.display.set_mode((xsize,ysize))
 
-pygame.display.set_caption("First Game")
+pygame.display.set_caption("Asteroids")
 
 x = xsize/2
 y = ysize/2
@@ -242,6 +271,8 @@ score = 0
 l_size = ysize/18
 m_size = ysize/30
 s_size = ysize/60
+lives = 3
+ticker = 0
 
 fonte = pygame.freetype.Font("fonte.ttf", 100)
 
@@ -257,31 +288,37 @@ bullets = []
 run = True
 while run:
     pygame.time.delay(16)
-    #pygame.time.delay(1000)
 
     win.fill((0,0,0))
     fonte.render_to(win, (50, 50), str(score) , (255, 255, 255))
 
+    if ticker != 0:
+        ticker -= 1
+
     if start == 1:
         x = xsize/2
         y = ysize/2
+        xvel = 0
+        yvel = 0
         spawn_asts(level)
         start = 0
 
     for event in pygame.event.get():
         if event.type == pygame.QUIT:
-            print("FIM")
             run = False
             break
 
         if event.type == pygame.KEYDOWN:
-            if event.key == pygame.K_SPACE:
+            if event.key == pygame.K_SPACE and ticker == 0:
                 incx = ((math.sin(math.radians(angle)))*bltspd)
                 incy = ((math.cos(math.radians(angle)))*bltspd)
                 bullets.append([x, y, incx, incy, 0])
 
-    if not run:
-        break
+            if event.key == pygame.K_DOWN:
+                newpos = teleport()
+                ticker = 60
+                x = newpos[0]
+                y = newpos[1]
 
     keys = pygame.key.get_pressed()
     
@@ -326,32 +363,16 @@ while run:
         x = xsize - x
     if y < 0:
         y = ysize - y
-    
-    anglep2 = angle + 135
-    anglep3 = angle + 135 + 90
-    
-    if anglep2 >= 360:
-        anglep2 -= 360
-        
-    if anglep3 >= 360:
-        anglep3 -= 360
-    
-    point1 = (((math.sin(math.radians(angle)))*radius)+x,((math.cos(math.radians(angle)))*radius)+y)
-    point2 = (((math.sin(math.radians(anglep2)))*radius)+x,((math.cos(math.radians(anglep2)))*radius)+y)
-    point3 = (((math.sin(math.radians(anglep3)))*radius)+x,((math.cos(math.radians(anglep3)))*radius)+y)
-    pos = [point1, point2, point3]
-    
-    midfire = (((math.sin(math.radians(angle)))*(radius-40))+x,((math.cos(math.radians(angle)))*(radius-40))+y)
-    pointfire = (((math.sin(math.radians(angle)))*(radius-30))+x,((math.cos(math.radians(angle)))*(radius-30))+y)
 
-    pygame.draw.polygon(win, (0,255,0), pos, width= 2)
+    if not run:
+        break
 
-    if keys[pygame.K_UP]:
-        pygame.draw.line(win, (255,127,0), midfire, pointfire, width=5)
+    if ticker == 0:
+        draw_ship()
+        run = ship_collision(x, y)
 
     updatebullets()
     updateasts()
-    run = ship_collision(x, y)
     bullet_collision()
     leveluptest()
 
