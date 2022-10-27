@@ -27,6 +27,7 @@ def updatebullets():
         else:
             bullets.remove(i)
 
+
 def updateasts():
     for i in l_ast:
         i[0] += i[2]
@@ -39,7 +40,7 @@ def updateasts():
             i[0] = xsize - i[0]
         if i[1] < 0:
             i[1] = ysize - i[1]
-        draw_ast(i[0], i[1], 50.0)
+        draw_ast(i[0], i[1], i[4])
 
     for i in m_ast:
         i[0] += i[2]
@@ -52,7 +53,7 @@ def updateasts():
             i[0] = xsize - i[0]
         if i[1] < 0:
             i[1] = ysize - i[1]
-        draw_ast(i[0], i[1], 30.0)
+        draw_ast(i[0], i[1], i[4])
 
     for i in s_ast:
         i[0] += i[2]
@@ -65,11 +66,11 @@ def updateasts():
             i[0] = xsize - i[0]
         if i[1] < 0:
             i[1] = ysize - i[1]
-        draw_ast(i[0], i[1], 15.0)
+        draw_ast(i[0], i[1], i[4])
     
 
 def spawn_asts(level):
-    for i in range(int((level+1)/2)+1):
+    for i in range(int((level+1)/2)+4):
         ypos = random.randint(0,ysize)
         if bool(random.getrandbits(1)):
             xpos = random.randint(0, int((xsize/4)))
@@ -84,12 +85,25 @@ def spawn_asts(level):
         if bool(random.getrandbits(1)):
             xspd = -xspd
 
-        l_ast.append([xpos, ypos, xspd, yspd])
+        l_ast.append([xpos, ypos, xspd, yspd, gerar_ast('L')])
+
 
 def spawn_asts_v2(x, y, s):
     if s == 'L':
         for i in range (2):
             yspd = (random.randint(0,int(ast_speedlimit*0.7*10)))/10
+            xspd = (random.randint(0, int(ast_speedlimit*0.5*10)))/10
+
+            if bool(random.getrandbits(1)):
+                yspd = -yspd
+            if bool(random.getrandbits(1)):
+                xspd = -xspd
+
+            m_ast.append([x, y, xspd, yspd, gerar_ast('M')])
+
+    elif s == 'M':
+        for i in range (2):
+            yspd = (random.randint(0,int(ast_speedlimit*10)))/10
             xspd = (random.randint(0, int(ast_speedlimit*0.7*10)))/10
 
             if bool(random.getrandbits(1)):
@@ -97,47 +111,74 @@ def spawn_asts_v2(x, y, s):
             if bool(random.getrandbits(1)):
                 xspd = -xspd
             
-            m_ast.append([x, y, xspd, yspd])
+            s_ast.append([x, y, xspd, yspd, gerar_ast('S')])
+
+
+def gerar_ast(s):
+    if s == 'L':
+        coordenadas = []
+        for k in range(8):
+            for i in range(1):
+                alphas = [random.uniform(0, 45), random.uniform(45, 90), random.uniform(90, 135), random.uniform(135, 180), random.uniform(180, 225), random.uniform(225, 270), random.uniform(270, 315), random.uniform(315, 360)]
+                d = random.uniform(l_size*0.9, l_size*1.1)
+                i = d * math.cos(math.radians(alphas[k]))
+                j = d * math.sin(math.radians(alphas[k]))
+                coordenadas.append((i, j))
+        return coordenadas
 
     elif s == 'M':
-        for i in range (2):
-            yspd = (random.randint(0,int(ast_speedlimit*10)))/10
-            xspd = (random.randint(0, int(ast_speedlimit*10)))/10
+        coordenadas = []
+        for k in range(8):
+            for i in range(1):
+                alphas = [random.uniform(0, 45), random.uniform(45, 90), random.uniform(90, 135), random.uniform(135, 180), random.uniform(180, 225), random.uniform(225, 270), random.uniform(270, 315), random.uniform(315, 360)]
+                d = random.uniform(m_size*0.9, m_size*1.1)
+                i = d * math.cos(math.radians(alphas[k]))
+                j = d * math.sin(math.radians(alphas[k]))
+                coordenadas.append((i, j))
+        return coordenadas
 
-            if bool(random.getrandbits(1)):
-                yspd = -yspd
-            if bool(random.getrandbits(1)):
-                xspd = -xspd
-            
-            s_ast.append([x, y, xspd, yspd])
+    elif s == 'S':
+        coordenadas = []
+        for k in range(8):
+            for i in range(1):
+                alphas = [random.uniform(0, 45), random.uniform(45, 90), random.uniform(90, 135), random.uniform(135, 180), random.uniform(180, 225), random.uniform(225, 270), random.uniform(270, 315), random.uniform(315, 360)]
+                d = random.uniform(s_size*0.9, s_size*1.1)
+                i = d * math.cos(math.radians(alphas[k]))
+                j = d * math.sin(math.radians(alphas[k]))
+                coordenadas.append((i, j))
+        return coordenadas
+
 
 def draw_ast(x, y, s):
-    pygame.draw.circle(win, (255,255,255), (x, y), s, width=10)
+    pos_ast = []
+    for i in s:
+        pos_ast.append(((i[0]+x),(i[1]+y)))
+
+    pygame.draw.polygon(win, (255,255,255), pos_ast, width=2)
+
 
 def ship_collision(ship_x, ship_y):
     for i in l_ast:
         dist = abs((((i[0] - ship_x)**2) + ((i[1] - ship_y)**2))**(1/2))
-        if dist < 50.0:
-            print("BATEU")
+        if dist < l_size*1.15:
             return False
     for i in m_ast:
         dist = abs((((i[0] - ship_x)**2) + ((i[1] - ship_y)**2))**(1/2))
-        if dist < 30.0:
-            print("BATEU")
+        if dist < m_size*1.15:
             return False  
     for i in s_ast:
         dist = abs((((i[0] - ship_x)**2) + ((i[1] - ship_y)**2))**(1/2))
-        if dist < 15.0:
-            print("BATEU")
+        if dist < s_size*1.15:
             return False
     return True
+
 
 def bullet_collision():
     global score
     for bullet in bullets:
         for ast in l_ast:
             dist = abs((((ast[0] - bullet[0])**2) + ((ast[1] - bullet[1])**2))**(1/2))
-            if dist < 50.0:
+            if dist < l_size:
                 spawn_asts_v2(ast[0], ast[1], 'L')
                 l_ast.remove(ast)
                 score += 100
@@ -148,7 +189,7 @@ def bullet_collision():
 
         for ast in m_ast:
             dist = abs((((ast[0] - bullet[0])**2) + ((ast[1] - bullet[1])**2))**(1/2))
-            if dist < 30.0:
+            if dist < m_size:
                 spawn_asts_v2(ast[0], ast[1], 'M')
                 m_ast.remove(ast)
                 score += 150
@@ -159,13 +200,14 @@ def bullet_collision():
 
         for ast in s_ast:
             dist = abs((((ast[0] - bullet[0])**2) + ((ast[1] - bullet[1])**2))**(1/2))
-            if dist < 15.0:
+            if dist < s_size:
                 s_ast.remove(ast)
                 score += 220
                 try:
                     bullets.remove(bullet)
                 except:
                     pass
+
 
 def leveluptest(): 
     if (len(l_ast) == 0) and (len(m_ast) == 0) and (len(s_ast) == 0):
@@ -184,7 +226,7 @@ pygame.display.set_caption("First Game")
 
 x = xsize/2
 y = ysize/2
-radius = 15
+radius = ysize/60
 angle = 180
 rotspd = 120
 xvel = 0
@@ -197,6 +239,9 @@ edgepenetration = 18
 start = 1 
 ast_speedlimit = 6
 score = 0
+l_size = ysize/18
+m_size = ysize/30
+s_size = ysize/60
 
 fonte = pygame.freetype.Font("fonte.ttf", 100)
 
@@ -221,17 +266,22 @@ while run:
         x = xsize/2
         y = ysize/2
         spawn_asts(level)
-        start = 0 
+        start = 0
 
     for event in pygame.event.get():
         if event.type == pygame.QUIT:
+            print("FIM")
             run = False
+            break
 
         if event.type == pygame.KEYDOWN:
             if event.key == pygame.K_SPACE:
                 incx = ((math.sin(math.radians(angle)))*bltspd)
                 incy = ((math.cos(math.radians(angle)))*bltspd)
                 bullets.append([x, y, incx, incy, 0])
+
+    if not run:
+        break
 
     keys = pygame.key.get_pressed()
     
