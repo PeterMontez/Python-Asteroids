@@ -69,7 +69,7 @@ def updateasts():
     
 
 def spawn_asts(level):
-    for i in range(int((level+1)/2)+4):
+    for i in range(int((level+1)/2)+1):
         ypos = random.randint(0,ysize)
         if bool(random.getrandbits(1)):
             xpos = random.randint(0, int((xsize/4)))
@@ -133,12 +133,14 @@ def ship_collision(ship_x, ship_y):
     return True
 
 def bullet_collision():
+    global score
     for bullet in bullets:
         for ast in l_ast:
             dist = abs((((ast[0] - bullet[0])**2) + ((ast[1] - bullet[1])**2))**(1/2))
             if dist < 50.0:
                 spawn_asts_v2(ast[0], ast[1], 'L')
                 l_ast.remove(ast)
+                score += 100
                 try:
                     bullets.remove(bullet)
                 except:
@@ -149,6 +151,7 @@ def bullet_collision():
             if dist < 30.0:
                 spawn_asts_v2(ast[0], ast[1], 'M')
                 m_ast.remove(ast)
+                score += 150
                 try:
                     bullets.remove(bullet)
                 except:
@@ -158,10 +161,17 @@ def bullet_collision():
             dist = abs((((ast[0] - bullet[0])**2) + ((ast[1] - bullet[1])**2))**(1/2))
             if dist < 15.0:
                 s_ast.remove(ast)
+                score += 220
                 try:
                     bullets.remove(bullet)
                 except:
                     pass
+
+def leveluptest(): 
+    if (len(l_ast) == 0) and (len(m_ast) == 0) and (len(s_ast) == 0):
+        global  level, start
+        level += 1
+        start = 1
 
 pygame.init()
 
@@ -186,6 +196,9 @@ bltspd = 20
 edgepenetration = 18
 start = 1 
 ast_speedlimit = 6
+score = 0
+
+fonte = pygame.freetype.Font("fonte.ttf", 100)
 
 s_ast = []
 m_ast = []
@@ -202,10 +215,13 @@ while run:
     #pygame.time.delay(1000)
 
     win.fill((0,0,0))
+    fonte.render_to(win, (50, 50), str(score) , (255, 255, 255))
 
     if start == 1:
+        x = xsize/2
+        y = ysize/2
         spawn_asts(level)
-        start = 0
+        start = 0 
 
     for event in pygame.event.get():
         if event.type == pygame.QUIT:
@@ -287,6 +303,7 @@ while run:
     updateasts()
     run = ship_collision(x, y)
     bullet_collision()
+    leveluptest()
 
     pygame.display.update()
 pygame.quit()
