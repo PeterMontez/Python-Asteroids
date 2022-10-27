@@ -1,8 +1,7 @@
-import ast
-from pickle import FALSE
 import pygame
 import math
 import random
+import time
 
 def updatebullets():
     for i in bullets:
@@ -161,16 +160,25 @@ def ship_collision(ship_x, ship_y):
     for i in l_ast:
         dist = abs((((i[0] - ship_x)**2) + ((i[1] - ship_y)**2))**(1/2))
         if dist < l_size*1.15:
-            return False
+            collide()
     for i in m_ast:
         dist = abs((((i[0] - ship_x)**2) + ((i[1] - ship_y)**2))**(1/2))
         if dist < m_size*1.15:
-            return False  
+            collide()  
     for i in s_ast:
         dist = abs((((i[0] - ship_x)**2) + ((i[1] - ship_y)**2))**(1/2))
         if dist < s_size*1.15:
-            return False
-    return True
+            collide()
+
+
+def collide():
+    global lives, ticker, x, y, xvel, yvel, angle
+    lives -= 1
+    ticker = 60
+    x = xsize/2
+    y = ysize/2
+    xvel, yvel = 0,0
+    angle = 180
 
 
 def bullet_collision():
@@ -275,6 +283,7 @@ lives = 3
 ticker = 0
 
 fonte = pygame.freetype.Font("fonte.ttf", 100)
+livesf = pygame.freetype.Font("fonte.ttf", 50)
 
 s_ast = []
 m_ast = []
@@ -291,6 +300,7 @@ while run:
 
     win.fill((0,0,0))
     fonte.render_to(win, (50, 50), str(score) , (255, 255, 255))
+    livesf.render_to(win, (55, 100), str(lives) , (255, 255, 255))
 
     if ticker != 0:
         ticker -= 1
@@ -369,7 +379,7 @@ while run:
 
     if ticker == 0:
         draw_ship()
-        run = ship_collision(x, y)
+        ship_collision(x, y)
 
     updatebullets()
     updateasts()
