@@ -160,14 +160,19 @@ def ship_collision(ship_x, ship_y):
     for i in l_ast:
         dist = abs((((i[0] - ship_x)**2) + ((i[1] - ship_y)**2))**(1/2))
         if dist < l_size*1.15:
+            spawn_asts_v2(i[0], i[1], 'L')
+            l_ast.remove(i)
             collide()
     for i in m_ast:
         dist = abs((((i[0] - ship_x)**2) + ((i[1] - ship_y)**2))**(1/2))
         if dist < m_size*1.15:
+            spawn_asts_v2(i[0], i[1], 'M')
+            m_ast.remove(i)
             collide()  
     for i in s_ast:
         dist = abs((((i[0] - ship_x)**2) + ((i[1] - ship_y)**2))**(1/2))
         if dist < s_size*1.15:
+            s_ast.remove(i)
             collide()
 
 
@@ -256,7 +261,8 @@ def draw_ship():
 
 
 def draw_enemy(x, y):
-    enemy_vertices = [(0,0), (-15,25), (15,25), (20,15), (-20,15), (0,10), (10,20), (-10,20), (0,20), (-10,5)]
+    enemy_color = (255,0,0)
+    enemy_vertices = [(0,0), (-15,25), (15,25), (20,15), (-20,15), (0,10), (10,20), (-10,20), (0,20), (-10,5), (0,5)]
     enemy_pos = []
     arc_pos = []
 
@@ -269,19 +275,21 @@ def draw_enemy(x, y):
     arc_pos.append(20)
     arc_pos.append(20)
 
-    pygame.draw.polygon(win, (255,255,0), enemy_pos[1:5], width= 2)
-    pygame.draw.circle(win, (0,255,0), enemy_pos[6], 1, width= 2)
-    pygame.draw.circle(win, (0,255,0), enemy_pos[7], 1, width= 2)
-    pygame.draw.circle(win, (0,255,0), enemy_pos[8], 1, width= 2)
-    pygame.draw.arc(win, (0,255,0), (arc_pos), 0, math.pi, 2)
-    pygame.draw.line(win, (0,255,0), enemy_pos[0], enemy_pos[7], width= 2)
+    pygame.draw.polygon(win, enemy_color, enemy_pos[1:5], width= 2)
+    pygame.draw.circle(win, enemy_color, enemy_pos[6], 1, width= 2)
+    pygame.draw.circle(win, enemy_color, enemy_pos[7], 1, width= 2)
+    pygame.draw.circle(win, enemy_color, enemy_pos[8], 1, width= 2)
+    pygame.draw.arc(win, enemy_color, (arc_pos), 0, math.pi, 2)
+    pygame.draw.line(win, enemy_color, enemy_pos[0], enemy_pos[10], width= 2)
 
 
 def enemy_ship(enemy_x, enemy_y):
     for i in l_ast:
         dist = abs((((i[0] - enemy_x)**2) + ((i[1] - enemy_y)**2))**(1/2))
         if dist < l_size*3:
-            pass
+            ((i[0]-enemy_x)/dist)
+
+
     for i in m_ast:
         dist = abs((((i[0] - enemy_x)**2) + ((i[1] - enemy_y)**2))**(1/2))
         if dist < m_size*5:
@@ -291,9 +299,20 @@ def enemy_ship(enemy_x, enemy_y):
         if dist < s_size*10:
             pass
 
+    
 
 def teleport():
     return [(random.randint(0,xsize)), (random.randint(0,ysize))]
+
+
+def enemy_movement():
+    nave = (0, 0) #B
+    asteroid = (0,-10) #A
+    # math.atan((yb-ya)/(xb-xa))
+    angulopuro = math.atan((nave[1] - asteroid[1])/(nave[0] - asteroid[0]))
+    print(angulopuro)
+
+    print(angulopuro if asteroid[0] > nave[0] and asteroid[1] > nave[1] else (math.radians(180)+angulopuro if asteroid[0] < nave[0] and asteroid[1] > nave[1] else (math.radians(180)+angulopuro if asteroid[0] < nave[0] and asteroid[1] < nave[1] else math.radians(360)+angulopuro)))
 
 
 pygame.init()
@@ -434,7 +453,7 @@ while run:
     updateasts()
     bullet_collision()
     leveluptest()
-    draw_enemy(800, 600)
+    #draw_enemy(450, 450)
 
     pygame.display.update()
 pygame.quit()
