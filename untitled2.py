@@ -284,22 +284,42 @@ def draw_enemy(x, y):
 
 
 def enemy_ship(enemy_x, enemy_y):
+    highest_risk = 0
     for i in l_ast:
         dist = abs((((i[0] - enemy_x)**2) + ((i[1] - enemy_y)**2))**(1/2))
         if dist < l_size*3:
-            ((i[0]-enemy_x)/dist)
-
-
+            if dist < highest_risk:
+                highest_risk = 1
     for i in m_ast:
         dist = abs((((i[0] - enemy_x)**2) + ((i[1] - enemy_y)**2))**(1/2))
         if dist < m_size*5:
-            pass
+            if dist < highest_risk:
+                highest_risk = 2
     for i in s_ast:
         dist = abs((((i[0] - enemy_x)**2) + ((i[1] - enemy_y)**2))**(1/2))
         if dist < s_size*10:
-            pass
+            if dist < highest_risk:
+                highest_risk = 3
+    draw_enemy(enemy_x, enemy_y)
+
+
+    if abs(yvel) < enemyspd:
+        yvel += (math.cos(math.radians(angle)))*accel/20
+    elif yvel > 0 and (math.cos(math.radians(angle)))*accel/20 < 0:
+        yvel += (math.cos(math.radians(angle)))*accel/20
+    elif yvel < 0 and (math.cos(math.radians(angle)))*accel/20 > 0:
+        yvel += (math.cos(math.radians(angle)))*accel/20
+    
+    if abs(xvel) < enemyspd:
+        xvel += (math.sin(math.radians(angle)))*accel/20
+    elif xvel > 0 and (math.sin(math.radians(angle)))*accel/20 < 0:
+        xvel += (math.sin(math.radians(angle)))*accel/20
+    elif xvel < 0 and (math.sin(math.radians(angle)))*accel/20 > 0:
+        xvel += (math.sin(math.radians(angle)))*accel/20
 
     
+
+   
 
 def teleport():
     return [(random.randint(0,xsize)), (random.randint(0,ysize))]
@@ -326,6 +346,10 @@ pygame.display.set_caption("Asteroids")
 
 x = xsize/2
 y = ysize/2
+enemy_x = xsize/1.75
+enemy_y = ysize/1.75
+enemy_x_spd = 0
+enemy_y_spd = 0
 radius = ysize/60
 angle = 180
 rotspd = 120
@@ -449,6 +473,7 @@ while run:
         draw_ship()
         ship_collision(x, y)
 
+    enemy_ship(enemy_x, enemy_y)
     updatebullets()
     updateasts()
     bullet_collision()
