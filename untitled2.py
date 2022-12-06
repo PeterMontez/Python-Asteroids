@@ -1,5 +1,6 @@
 import pygame
 import math
+from math import atan2, degrees, radians
 import random
 import time
 
@@ -237,6 +238,9 @@ def leveluptest():
 
 
 def draw_ship():
+    hist.append([x,y])
+    if len(hist) > 100:
+        hist.pop(0)
     anglep2 = angle + 135
     anglep3 = angle + 135 + 90
     
@@ -260,14 +264,22 @@ def draw_ship():
         pygame.draw.line(win, (255,127,0), midfire, pointfire, width=5)
 
 
-def draw_enemy(x, y):
+def enemy_logic():
+    if len(hist) > 99:
+        en_x = (hist[0])[0]
+        en_y = (hist[0])[1]
+    else:
+        en_x = 450
+        en_y = 450
+    en_x = 450
+    en_y = 450
     enemy_color = (255,0,0)
     enemy_vertices = [(0,0), (-15,25), (15,25), (20,15), (-20,15), (0,10), (10,20), (-10,20), (0,20), (-10,5), (0,5)]
     enemy_pos = []
     arc_pos = []
 
     for i in enemy_vertices:
-        enemy_pos.append((i[0]+x, i[1]+y))
+        enemy_pos.append((i[0]+en_x, i[1]+en_y))
 
     for i in enemy_pos[9]:
         arc_pos.append(i)
@@ -281,58 +293,39 @@ def draw_enemy(x, y):
     pygame.draw.circle(win, enemy_color, enemy_pos[8], 1, width= 2)
     pygame.draw.arc(win, enemy_color, (arc_pos), 0, math.pi, 2)
     pygame.draw.line(win, enemy_color, enemy_pos[0], enemy_pos[10], width= 2)
-
-
-def enemy_ship(enemy_x, enemy_y):
-    highest_risk = 0
-    for i in l_ast:
-        dist = abs((((i[0] - enemy_x)**2) + ((i[1] - enemy_y)**2))**(1/2))
-        if dist < l_size*3:
-            if dist < highest_risk:
-                highest_risk = 1
-    for i in m_ast:
-        dist = abs((((i[0] - enemy_x)**2) + ((i[1] - enemy_y)**2))**(1/2))
-        if dist < m_size*5:
-            if dist < highest_risk:
-                highest_risk = 2
-    for i in s_ast:
-        dist = abs((((i[0] - enemy_x)**2) + ((i[1] - enemy_y)**2))**(1/2))
-        if dist < s_size*10:
-            if dist < highest_risk:
-                highest_risk = 3
-    draw_enemy(enemy_x, enemy_y)
-
-
-    if abs(yvel) < enemyspd:
-        yvel += (math.cos(math.radians(angle)))*accel/20
-    elif yvel > 0 and (math.cos(math.radians(angle)))*accel/20 < 0:
-        yvel += (math.cos(math.radians(angle)))*accel/20
-    elif yvel < 0 and (math.cos(math.radians(angle)))*accel/20 > 0:
-        yvel += (math.cos(math.radians(angle)))*accel/20
-    
-    if abs(xvel) < enemyspd:
-        xvel += (math.sin(math.radians(angle)))*accel/20
-    elif xvel > 0 and (math.sin(math.radians(angle)))*accel/20 < 0:
-        xvel += (math.sin(math.radians(angle)))*accel/20
-    elif xvel < 0 and (math.sin(math.radians(angle)))*accel/20 > 0:
-        xvel += (math.sin(math.radians(angle)))*accel/20
-
+    return([en_x, en_y])
     
 
-   
+def enemy_attack():
+    pos = enemy_logic()
+    angle_en = angulo_enemy([((hist[0])[0]), ((hist[0])[1])])
+
+    if angle_en == 1:
+        pass
+
+    incx = ((math.sin(math.radians(angle_en)))*bltspd)
+    incy = ((math.cos(math.radians(angle_en)))*bltspd)
+    bullets.append([pos[0], pos[1], incx, incy, 0])
+
+
 
 def teleport():
     return [(random.randint(0,xsize)), (random.randint(0,ysize))]
 
 
-def enemy_movement():
-    nave = (0, 0) #B
-    asteroid = (0,-10) #A
-    # math.atan((yb-ya)/(xb-xa))
-    angulopuro = math.atan((nave[1] - asteroid[1])/(nave[0] - asteroid[0]))
-    print(angulopuro)
+def angulo_enemy(pos):
+    point_1 = [x,y]
+    point_2 = pos
+    print(point_1, point_2)
 
-    print(angulopuro if asteroid[0] > nave[0] and asteroid[1] > nave[1] else (math.radians(180)+angulopuro if asteroid[0] < nave[0] and asteroid[1] > nave[1] else (math.radians(180)+angulopuro if asteroid[0] < nave[0] and asteroid[1] < nave[1] else math.radians(360)+angulopuro)))
+    angle = math.atan((point_2[1] - point_1[1])/(point_2[0] - point_1[0]))
+
+    angle = degrees(angle)
+    # if angle < 0:
+    #     angle = 360 + angle
+
+    print(angle)
+    return angle
 
 
 pygame.init()
@@ -369,6 +362,8 @@ m_size = ysize/30
 s_size = ysize/60
 lives = 3
 ticker = 0
+ticks = 0
+secs = 0
 
 fonte = pygame.freetype.Font("fonte.ttf", 100)
 livesf = pygame.freetype.Font("fonte.ttf", 50)
@@ -376,6 +371,8 @@ livesf = pygame.freetype.Font("fonte.ttf", 50)
 s_ast = []
 m_ast = []
 l_ast = []
+
+hist = []
 
 level = 0
 
@@ -386,6 +383,14 @@ bullets = []
 
 run = True
 while run:
+
+    if ticks == 60:
+        secs += 1
+        ticks = 0
+        enemy_attack()
+    else:
+        ticks += 1
+
     pygame.time.delay(16)
 
     win.fill((0,0,0))
@@ -431,19 +436,20 @@ while run:
         angle -= rotspd/20
     
     if keys[pygame.K_UP]:
-        if abs(yvel) < speedlimit:
-            yvel += (math.cos(math.radians(angle)))*accel/20
-        elif yvel > 0 and (math.cos(math.radians(angle)))*accel/20 < 0:
-            yvel += (math.cos(math.radians(angle)))*accel/20
-        elif yvel < 0 and (math.cos(math.radians(angle)))*accel/20 > 0:
-            yvel += (math.cos(math.radians(angle)))*accel/20
-        
-        if abs(xvel) < speedlimit:
-            xvel += (math.sin(math.radians(angle)))*accel/20
-        elif xvel > 0 and (math.sin(math.radians(angle)))*accel/20 < 0:
-            xvel += (math.sin(math.radians(angle)))*accel/20
-        elif xvel < 0 and (math.sin(math.radians(angle)))*accel/20 > 0:
-            xvel += (math.sin(math.radians(angle)))*accel/20
+        if ticker == 0:
+            if abs(yvel) < speedlimit:
+                yvel += (math.cos(math.radians(angle)))*accel/20
+            elif yvel > 0 and (math.cos(math.radians(angle)))*accel/20 < 0:
+                yvel += (math.cos(math.radians(angle)))*accel/20
+            elif yvel < 0 and (math.cos(math.radians(angle)))*accel/20 > 0:
+                yvel += (math.cos(math.radians(angle)))*accel/20
+            
+            if abs(xvel) < speedlimit:
+                xvel += (math.sin(math.radians(angle)))*accel/20
+            elif xvel > 0 and (math.sin(math.radians(angle)))*accel/20 < 0:
+                xvel += (math.sin(math.radians(angle)))*accel/20
+            elif xvel < 0 and (math.sin(math.radians(angle)))*accel/20 > 0:
+                xvel += (math.sin(math.radians(angle)))*accel/20
 
     else:
         yvel = yvel/(1+(decell/1000))
@@ -473,12 +479,12 @@ while run:
         draw_ship()
         ship_collision(x, y)
 
-    enemy_ship(enemy_x, enemy_y)
+    #enemy_ship()
     updatebullets()
-    updateasts()
+    #updateasts()
     bullet_collision()
     leveluptest()
-    #draw_enemy(450, 450)
+    enemy_logic()
 
     pygame.display.update()
 pygame.quit()
