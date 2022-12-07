@@ -158,6 +158,8 @@ def draw_ast(x, y, s):
 
 
 def ship_collision(ship_x, ship_y):
+    global enemy_y, enemy_x, score, enemy_spawn
+
     for i in l_ast:
         dist = abs((((i[0] - ship_x)**2) + ((i[1] - ship_y)**2))**(1/2))
         if dist < l_size*1.15:
@@ -176,11 +178,18 @@ def ship_collision(ship_x, ship_y):
             s_ast.remove(i)
             collide()
 
+    dist = abs((((enemy_x - ship_x)**2) + ((enemy_y - ship_y)**2))**(1/2))
+    if dist < radius*1.1 and enemy_spawn == 1:
+        enemy_spawn = 0
+        score -= 500
+    
+        collide()
 
 def collide():
-    global lives, ticker, x, y, xvel, yvel, angle
+    global lives, ticker, x, y, xvel, yvel, angle, enemy_spawn
+    enemy_spawn = 0
     lives -= 1
-    ticker = 60
+    ticker = 180
     x = xsize/2
     y = ysize/2
     xvel, yvel = 0,0
@@ -188,16 +197,14 @@ def collide():
 
 
 def bullet_collision():
-    global score
+    global score, enemy_spawn, enemy_x, enemy_y, ticker
     for bullet in bullets:
         for ast in l_ast:
             dist = abs((((ast[0] - bullet[0])**2) + ((ast[1] - bullet[1])**2))**(1/2))
             if dist < l_size:
                 spawn_asts_v2(ast[0], ast[1], 'L')
                 l_ast.remove(ast)
-                if enemy_spawn == 1:
-                    spawn_enemy()
-                score += 100
+                score += 50
                 try:
                     bullets.remove(bullet)
                 except:
@@ -208,9 +215,7 @@ def bullet_collision():
             if dist < m_size:
                 spawn_asts_v2(ast[0], ast[1], 'M')
                 m_ast.remove(ast)
-                if enemy_spawn == 1:
-                    spawn_enemy()
-                score += 150
+                score += 100
                 try:
                     bullets.remove(bullet)
                 except:
@@ -220,21 +225,39 @@ def bullet_collision():
             dist = abs((((ast[0] - bullet[0])**2) + ((ast[1] - bullet[1])**2))**(1/2))
             if dist < s_size:
                 s_ast.remove(ast)
-                if enemy_spawn == 1:
-                    spawn_enemy()
-                score += 220
+                score += 150
                 try:
                     bullets.remove(bullet)
                 except:
                     pass
 
+        dist = abs((((x - bullet[0])**2) + ((y - bullet[1])**2))**(1/2))
+        if (dist < radius) and bullet[5] == 1:
+            score -= 500
+            try:
+                bullets.remove(bullet)
+            except:
+                pass
+            if ticker == 0:
+                collide()
+
+        dist = abs((((enemy_x - bullet[0])**2) + ((enemy_y - bullet[1])**2))**(1/2))
+        if (dist < radius*1.1) and bullet[5] == 0:
+            score += 500
+            try:
+                bullets.remove(bullet)
+            except:
+                pass
+            enemy_spawn = 0
+
 
 def leveluptest(): 
     if (len(l_ast) == 0) and (len(m_ast) == 0) and (len(s_ast) == 0):
-        global  level, start
+        global  level, start, secs
         level += 1
         start = 1
         enemy_spawn = 1
+        secs = 0
 
 
 def draw_ship():
@@ -265,21 +288,19 @@ def draw_ship():
 
 
 def enemy_logic():
+    global enemy_x, enemy_y, global_pulse
+
     if len(hist) > 99:
-        en_x = (hist[0])[0]
-        en_y = (hist[0])[1]
-    else:
-        en_x = 450
-        en_y = 450
-    en_x = 450
-    en_y = 450
+        enemy_x = (hist[0])[0]
+        enemy_y = (hist[0])[1]
+
     enemy_color = (255,0,0)
     enemy_vertices = [(0,0), (-15,25), (15,25), (20,15), (-20,15), (0,10), (10,20), (-10,20), (0,20), (-10,5), (0,5)]
     enemy_pos = []
     arc_pos = []
 
     for i in enemy_vertices:
-        enemy_pos.append((i[0]+en_x, i[1]+en_y))
+        enemy_pos.append((i[0]+enemy_x, i[1]+enemy_y))
 
     for i in enemy_pos[9]:
         arc_pos.append(i)
@@ -287,25 +308,24 @@ def enemy_logic():
     arc_pos.append(20)
     arc_pos.append(20)
 
+    if global_pulse == 1 and secs%2 == 0:
+        enemy_attack([enemy_x, enemy_y])
+
     pygame.draw.polygon(win, enemy_color, enemy_pos[1:5], width= 2)
     pygame.draw.circle(win, enemy_color, enemy_pos[6], 1, width= 2)
     pygame.draw.circle(win, enemy_color, enemy_pos[7], 1, width= 2)
     pygame.draw.circle(win, enemy_color, enemy_pos[8], 1, width= 2)
     pygame.draw.arc(win, enemy_color, (arc_pos), 0, math.pi, 2)
     pygame.draw.line(win, enemy_color, enemy_pos[0], enemy_pos[10], width= 2)
-    return([en_x, en_y])
+    return([enemy_x, enemy_y])
     
 
-def enemy_attack():
-    pos = enemy_logic()
-    angle_en = angulo_enemy([((hist[0])[0]), ((hist[0])[1])])
+def enemy_attack(pos):
+    angle_en = angulo_enemy(pos)
 
-    if angle_en == 1:
-        pass
-
-    incx = ((math.sin(math.radians(angle_en)))*bltspd)
-    incy = ((math.cos(math.radians(angle_en)))*bltspd)
-    bullets.append([pos[0], pos[1], incx, incy, 0])
+    incx = ((math.sin(math.radians(angle_en)))*bltspd*0.7)
+    incy = ((math.cos(math.radians(angle_en)))*bltspd*0.7)
+    bullets.append([pos[0], pos[1], incx, incy, 0, 1])
 
 
 
@@ -313,19 +333,27 @@ def teleport():
     return [(random.randint(0,xsize)), (random.randint(0,ysize))]
 
 
+
 def angulo_enemy(pos):
+    global x,y
+
     point_1 = [x,y]
     point_2 = pos
-    print(point_1, point_2)
 
-    angle = math.atan((point_2[1] - point_1[1])/(point_2[0] - point_1[0]))
+    angulinho = atan2(point_2[1] - point_1[1], point_2[0] - point_1[0])
 
-    angle = degrees(angle)
-    # if angle < 0:
-    #     angle = 360 + angle
+    angulinho = (angulinho/math.pi) * 180
 
-    print(angle)
-    return angle
+    if angulinho < 0:
+        angulinho = 360 + angulinho
+
+    angulinho = (360-angulinho) - 90
+
+    if angulinho < 0:
+        angulinho = 360 + angulinho
+
+    print(angulinho)
+    return angulinho
 
 
 pygame.init()
@@ -364,6 +392,7 @@ lives = 3
 ticker = 0
 ticks = 0
 secs = 0
+global_pulse = 0
 
 fonte = pygame.freetype.Font("fonte.ttf", 100)
 livesf = pygame.freetype.Font("fonte.ttf", 50)
@@ -380,16 +409,21 @@ enemy_spawn = 0
 
 bullets = []
 
-
 run = True
 while run:
+
+    if (level >=1) and (secs == 10):
+        enemy_spawn = 1
+    if (level >=3) and (math.floor(secs/13)%2==0) and (math.floor(secs/13)*13 == secs) and (math.floor(secs/13) != 0):
+        enemy_spawn = 1
 
     if ticks == 60:
         secs += 1
         ticks = 0
-        enemy_attack()
+        global_pulse = 1
     else:
         ticks += 1
+        global_pulse = 0
 
     pygame.time.delay(16)
 
@@ -416,10 +450,10 @@ while run:
             break
 
         if event.type == pygame.KEYDOWN:
-            if event.key == pygame.K_SPACE and ticker == 0:
+            if event.key == pygame.K_SPACE and ticker < 120:
                 incx = ((math.sin(math.radians(angle)))*bltspd)
                 incy = ((math.cos(math.radians(angle)))*bltspd)
-                bullets.append([x, y, incx, incy, 0])
+                bullets.append([x, y, incx, incy, 0, 0])
 
             if event.key == pygame.K_DOWN:
                 newpos = teleport()
@@ -436,7 +470,7 @@ while run:
         angle -= rotspd/20
     
     if keys[pygame.K_UP]:
-        if ticker == 0:
+        if ticker < 120:
             if abs(yvel) < speedlimit:
                 yvel += (math.cos(math.radians(angle)))*accel/20
             elif yvel > 0 and (math.cos(math.radians(angle)))*accel/20 < 0:
@@ -475,16 +509,21 @@ while run:
     if not run:
         break
 
+    if ticker < 120:
+        rounded = math.floor(ticker/10)
+        if rounded % 2 == 0:
+            draw_ship()
+    
     if ticker == 0:
-        draw_ship()
         ship_collision(x, y)
+        bullet_collision()
+        
+    if enemy_spawn == 1:
+        enemy_logic()
 
-    #enemy_ship()
-    updatebullets()
-    #updateasts()
-    bullet_collision()
+    updatebullets()  
+    updateasts()
     leveluptest()
-    enemy_logic()
-
+    
     pygame.display.update()
 pygame.quit()
