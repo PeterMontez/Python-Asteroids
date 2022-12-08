@@ -252,6 +252,7 @@ def bullet_collision():
 
 
 def leveluptest(): 
+    global l_ast, m_ast, s_ast
     if (len(l_ast) == 0) and (len(m_ast) == 0) and (len(s_ast) == 0):
         global  level, start, secs
         level += 1
@@ -261,6 +262,7 @@ def leveluptest():
 
 
 def draw_ship():
+    global x,y,hist,anglep2,angle,radius,win
     hist.append([x,y])
     if len(hist) > 100:
         hist.pop(0)
@@ -288,7 +290,7 @@ def draw_ship():
 
 
 def enemy_logic():
-    global enemy_x, enemy_y, global_pulse
+    global enemy_x, enemy_y, global_pulse, hist, win
 
     if len(hist) > 99:
         enemy_x = (hist[0])[0]
@@ -321,6 +323,7 @@ def enemy_logic():
     
 
 def enemy_attack(pos):
+    global incx, incy, bltspd
     angle_en = angulo_enemy(pos)
 
     incx = ((math.sin(math.radians(angle_en)))*bltspd*0.7)
@@ -330,6 +333,7 @@ def enemy_attack(pos):
 
 
 def teleport():
+    global xsize, ysize
     return [(random.randint(0,xsize)), (random.randint(0,ysize))]
 
 
@@ -356,14 +360,11 @@ def angulo_enemy(pos):
     return angulinho
 
 
-pygame.init()
 
 xsize = 900
 ysize = 900
 
 win = pygame.display.set_mode((xsize,ysize))
-
-pygame.display.set_caption("Asteroids")
 
 x = xsize/2
 y = ysize/2
@@ -394,8 +395,6 @@ ticks = 0
 secs = 0
 global_pulse = 0
 
-fonte = pygame.freetype.Font("fonte.ttf", 100)
-livesf = pygame.freetype.Font("fonte.ttf", 50)
 
 s_ast = []
 m_ast = []
@@ -409,121 +408,137 @@ enemy_spawn = 0
 
 bullets = []
 
-run = True
-while run:
+def game():
 
-    if (level >=1) and (secs == 10):
-        enemy_spawn = 1
-    if (level >=3) and (math.floor(secs/13)%2==0) and (math.floor(secs/13)*13 == secs) and (math.floor(secs/13) != 0):
-        enemy_spawn = 1
+    pygame.init()
 
-    if ticks == 60:
-        secs += 1
-        ticks = 0
-        global_pulse = 1
-    else:
-        ticks += 1
-        global_pulse = 0
+    pygame.display.set_caption("Asteroids")
 
-    pygame.time.delay(16)
+    
+    fonte = pygame.freetype.Font("fonte.ttf", 100)
+    livesf = pygame.freetype.Font("fonte.ttf", 50)
 
-    win.fill((0,0,0))
-    fonte.render_to(win, (50, 50), str(score) , (255, 255, 255))
-    livesf.render_to(win, (55, 100), str(lives) , (255, 255, 255))
+    global x,y,ticker,ticks,radius,angle,rotspd,xsize,ysize,lives,secs,global_pulse,score,start,enemy_spawn,keys,xvel,yvel
 
-    if ticker != 0:
-        ticker -= 1
 
-    if start == 1:
-        if enemy_spawn == 1:
-            pass
-        x = xsize/2
-        y = ysize/2
-        xvel = 0
-        yvel = 0
-        spawn_asts(level)
-        start = 0
 
-    for event in pygame.event.get():
-        if event.type == pygame.QUIT:
-            run = False
+    run = True
+    while run:
+
+        if (level >=1) and (secs == 10):
+            enemy_spawn = 1
+        if (level >=3) and (math.floor(secs/13)%2==0) and (math.floor(secs/13)*13 == secs) and (math.floor(secs/13) != 0):
+            enemy_spawn = 1
+
+        if ticks == 60:
+            secs += 1
+            ticks = 0
+            global_pulse = 1
+        else:
+            ticks += 1
+            global_pulse = 0
+
+        pygame.time.delay(16)
+
+        win.fill((0,0,0))
+        fonte.render_to(win, (50, 50), str(score) , (255, 255, 255))
+        livesf.render_to(win, (55, 100), str(lives) , (255, 255, 255))
+
+        if ticker != 0:
+            ticker -= 1
+
+        if start == 1:
+            if enemy_spawn == 1:
+                pass
+            x = xsize/2
+            y = ysize/2
+            xvel = 0
+            yvel = 0
+            spawn_asts(level)
+            start = 0
+
+        for event in pygame.event.get():
+            if event.type == pygame.QUIT:
+                run = False
+                break
+
+            if event.type == pygame.KEYDOWN:
+                if event.key == pygame.K_SPACE and ticker < 120:
+                    incx = ((math.sin(math.radians(angle)))*bltspd)
+                    incy = ((math.cos(math.radians(angle)))*bltspd)
+                    bullets.append([x, y, incx, incy, 0, 0])
+
+                if event.key == pygame.K_DOWN:
+                    newpos = teleport()
+                    ticker = 60
+                    x = newpos[0]
+                    y = newpos[1]
+
+        keys = pygame.key.get_pressed()
+        
+        if keys[pygame.K_LEFT]:
+            angle += rotspd/20
+            
+        if keys[pygame.K_RIGHT]:
+            angle -= rotspd/20
+        
+        if keys[pygame.K_UP]:
+            if ticker < 120:
+                if abs(yvel) < speedlimit:
+                    yvel += (math.cos(math.radians(angle)))*accel/20
+                elif yvel > 0 and (math.cos(math.radians(angle)))*accel/20 < 0:
+                    yvel += (math.cos(math.radians(angle)))*accel/20
+                elif yvel < 0 and (math.cos(math.radians(angle)))*accel/20 > 0:
+                    yvel += (math.cos(math.radians(angle)))*accel/20
+                
+                if abs(xvel) < speedlimit:
+                    xvel += (math.sin(math.radians(angle)))*accel/20
+                elif xvel > 0 and (math.sin(math.radians(angle)))*accel/20 < 0:
+                    xvel += (math.sin(math.radians(angle)))*accel/20
+                elif xvel < 0 and (math.sin(math.radians(angle)))*accel/20 > 0:
+                    xvel += (math.sin(math.radians(angle)))*accel/20
+
+        else:
+            yvel = yvel/(1+(decell/1000))
+            xvel = xvel/(1+(decell/1000))
+        
+        if angle < 0:
+            angle += 360
+        elif angle >= 360:
+            angle -= 360
+            
+        x = x + xvel
+        y = y + yvel
+
+        if x > xsize:
+            x = x - xsize
+        if y > ysize:
+            y = y - ysize
+        if x < 0:
+            x = xsize - x
+        if y < 0:
+            y = ysize - y
+
+        if not run:
             break
 
-        if event.type == pygame.KEYDOWN:
-            if event.key == pygame.K_SPACE and ticker < 120:
-                incx = ((math.sin(math.radians(angle)))*bltspd)
-                incy = ((math.cos(math.radians(angle)))*bltspd)
-                bullets.append([x, y, incx, incy, 0, 0])
-
-            if event.key == pygame.K_DOWN:
-                newpos = teleport()
-                ticker = 60
-                x = newpos[0]
-                y = newpos[1]
-
-    keys = pygame.key.get_pressed()
-    
-    if keys[pygame.K_LEFT]:
-        angle += rotspd/20
-        
-    if keys[pygame.K_RIGHT]:
-        angle -= rotspd/20
-    
-    if keys[pygame.K_UP]:
         if ticker < 120:
-            if abs(yvel) < speedlimit:
-                yvel += (math.cos(math.radians(angle)))*accel/20
-            elif yvel > 0 and (math.cos(math.radians(angle)))*accel/20 < 0:
-                yvel += (math.cos(math.radians(angle)))*accel/20
-            elif yvel < 0 and (math.cos(math.radians(angle)))*accel/20 > 0:
-                yvel += (math.cos(math.radians(angle)))*accel/20
+            rounded = math.floor(ticker/10)
+            if rounded % 2 == 0:
+                draw_ship()
+        
+        if ticker == 0:
+            ship_collision(x, y)
+            bullet_collision()
             
-            if abs(xvel) < speedlimit:
-                xvel += (math.sin(math.radians(angle)))*accel/20
-            elif xvel > 0 and (math.sin(math.radians(angle)))*accel/20 < 0:
-                xvel += (math.sin(math.radians(angle)))*accel/20
-            elif xvel < 0 and (math.sin(math.radians(angle)))*accel/20 > 0:
-                xvel += (math.sin(math.radians(angle)))*accel/20
+        if enemy_spawn == 1:
+            enemy_logic()
 
-    else:
-        yvel = yvel/(1+(decell/1000))
-        xvel = xvel/(1+(decell/1000))
-    
-    if angle < 0:
-        angle += 360
-    elif angle >= 360:
-        angle -= 360
+        updatebullets()  
+        updateasts()
+        leveluptest()
         
-    x = x + xvel
-    y = y + yvel
+        pygame.display.update()
+    pygame.quit()
 
-    if x > xsize:
-        x = x - xsize
-    if y > ysize:
-        y = y - ysize
-    if x < 0:
-        x = xsize - x
-    if y < 0:
-        y = ysize - y
-
-    if not run:
-        break
-
-    if ticker < 120:
-        rounded = math.floor(ticker/10)
-        if rounded % 2 == 0:
-            draw_ship()
-    
-    if ticker == 0:
-        ship_collision(x, y)
-        bullet_collision()
-        
-    if enemy_spawn == 1:
-        enemy_logic()
-
-    updatebullets()  
-    updateasts()
-    leveluptest()
-    
-    pygame.display.update()
-pygame.quit()
+game()
